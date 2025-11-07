@@ -25,10 +25,11 @@ bool isInRange(int value) {
     return false;
 }
 
-void calculatePossibleJumps(
-    const int currentRow, const int currentCol, const int chessBoard[8][8],
+bool calculatePossibleJumps(
+    const int currentRow, const int currentCol,
     std::vector<PossibleJumps> &possibleJumpsFromCurrentLocation) {
 
+    bool foundPossibilities = false;
     for (int jumps = 0; jumps < 8; jumps++) {
         int tempCurrentRow = currentRow + vertical[jumps];
         int tempCurrentCol = currentCol + horizontal[jumps];
@@ -37,8 +38,10 @@ void calculatePossibleJumps(
             chessBoard[tempCurrentRow][tempCurrentCol] == 0) {
             possibleJumpsFromCurrentLocation.push_back(
                 {tempCurrentRow, tempCurrentCol, jumps});
+            foundPossibilities = true;
         }
     }
+    return foundPossibilities;
 }
 
 void reduceAccessibilityNumbers(
@@ -72,8 +75,8 @@ int findBestJumpSlot(
 
 int main() {
 
-    int currentRow = 0;
-    int currentCol = 0;
+    int currentRow = 3;
+    int currentCol = 4;
 
     int accessibility[8][8] = {
         2, 3, 4, 4, 4, 4, 3, 2, 3, 4, 6, 6, 6, 6, 4, 3, 4, 6, 8, 8, 8, 8,
@@ -86,21 +89,30 @@ int main() {
     std::vector<PathTaken> pathTaken;
 
     initialiseChessBoard(currentRow, currentCol, pathTaken);
+    int tries = 1;
+    int countMoves = 0;
+    while (tries) { // loop until no more jumps possible
 
-    //    for (int jumps = 0; jumps < 8; jumps++) {
+        bool foundPossibilities = calculatePossibleJumps(
+            currentRow, currentCol, possibleJumpsFromCurrentLocation);
+        if (foundPossibilities) {
 
-    calculatePossibleJumps(currentRow, currentCol, chessBoard,
-                           possibleJumpsFromCurrentLocation);
-    reduceAccessibilityNumbers(accessibility, possibleJumpsFromCurrentLocation);
+            reduceAccessibilityNumbers(accessibility,
+                                       possibleJumpsFromCurrentLocation);
 
-    int bestSlotIndex = findBestJumpSlot(possibleJumpsFromCurrentLocation);
+            int bestSlotIndex =
+                findBestJumpSlot(possibleJumpsFromCurrentLocation);
 
-    currentRow = vertical[bestSlotIndex];
-    currentCol = horizontal[bestSlotIndex];
-    chessBoard[currentRow][currentCol] = 1;
-    pathTaken.push_back({currentRow, currentCol});
+            currentRow += vertical[bestSlotIndex];
+            currentCol += horizontal[bestSlotIndex];
+            chessBoard[currentRow][currentCol] = 1;
+            pathTaken.push_back({currentRow, currentCol});
+            countMoves++;
 
-    //    }
+            possibleJumpsFromCurrentLocation.clear();
+        }
+        tries = foundPossibilities;
+    }
 
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
@@ -108,11 +120,16 @@ int main() {
         }
         std::cout << std::endl;
     }
-    for (int i = 0; i < possibleJumpsFromCurrentLocation.size(); i++) {
-        std::cout << possibleJumpsFromCurrentLocation[i].row << "   ";
-        std::cout << possibleJumpsFromCurrentLocation[i].col << "   ";
-        std::cout << possibleJumpsFromCurrentLocation[i].index << std::endl;
+
+    std::cout << std::endl;
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            std::cout << chessBoard[i][j] << "  ";
+        }
+        std::cout << std::endl;
     }
+
+    std::cout << "\n" << countMoves << std::endl;
 
     return 0;
 }
